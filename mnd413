@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Syracuse Immigrant Population Map</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 24px;
+        }
+
+        h1 {
+            font-size: 32px;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #64748b;
+            margin-bottom: 20px;
+        }
+
+        .warning {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 16px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+
+        .warning-title {
+            font-weight: 600;
+            color: #92400e;
+            margin-bottom: 8px;
+        }
+
+        .warning-text {
+            font-size: 14px;
+            color: #78350f;
+            line-height: 1.5;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #1e3a8a;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #1e40af;
+            margin-top: 4px;
+        }
+
+        .stat-source {
+            font-size: 12px;
+            color: #2563eb;
+            margin-top: 4px;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .map-section, .details-section, .sources-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+
+        h2 {
+            font-size: 24px;
+            color: #1e293b;
+            margin-bottom: 20px;
+        }
+
+        #map {
+            width: 100%;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            background: #f8fafc;
+        }
+
+        .legend {
+            margin-top: 20px;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+
+        .legend-title {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 12px;
+        }
+
+        .legend-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+        }
+
+        .legend-text {
+            font-size: 14px;
+            color: #334155;
+        }
+
+        .details-content {
+            min-height: 300px;
+        }
+
+        .detail-row {
+            margin-bottom: 20px;
+        }
+
+        .detail-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        .detail-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1e293b;
+        }
+
+        .detail-text {
+            font-size: 14px;
+            color: #334155;
+            line-height: 1.6;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #94a3b8;
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .sources-section ul {
+            list-style: disc;
+            margin-left: 20px;
+            margin-top: 8px;
+        }
+
+        .sources-section li {
+            margin-bottom: 8px;
+            color: #334155;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .info-box {
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+        }
+
+        .info-box.blue {
+            background: #dbeafe;
+        }
+
+        .info-box.amber {
+            background: #fef3c7;
+        }
+
+        .info-box strong {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .info-box.blue strong {
+            color: #1e3a8a;
+        }
+
+        .info-box.amber strong {
+            color: #92400e;
+        }
+
+        .info-box p {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .info-box.blue p {
+            color: #1e40af;
+        }
+
+        .info-box.amber p {
+            color: #78350f;
+        }
+
+        .neighborhood {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .neighborhood:hover {
+            opacity: 1 !important;
+        }
+
+        @media (max-width: 1024px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Syracuse Immigrant Population Distribution</h1>
+            <p class="subtitle">Interactive map showing general patterns of immigrant settlement in Syracuse, NY</p>
+            
+            <div class="warning">
+                <div class="warning-title">⚠️ Data Limitation Notice</div>
+                <p class="warning-text">
+                    This map shows general patterns based on available public data from multiple sources (2023-2025). 
+                    Precise neighborhood-level statistics are not publicly available. The Northside concentration is 
+                    well-documented, but other areas show estimated patterns based on regional data and historical trends.
+                </p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">~17,000</div>
+                    <div class="stat-label">Total Foreign-Born</div>
+                    <div class="stat-source">Data USA 2023</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">11.6%</div>
+                    <div class="stat-label">% of Population</div>
+                    <div class="stat-source">Data USA 2023</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">70+</div>
+                    <div class="stat-label">Languages Spoken</div>
+                    <div class="stat-source">Syracuse Schools</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">Asia, Africa, Latin America</div>
+                    <div class="stat-label">Top Origin Areas</div>
+                    <div class="stat-source">Multiple sources</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-grid">
+            <div class="map-section">
+                <h2>Neighborhood Distribution</h2>
+                <svg id="map" viewBox="0 0 800 650">
+                    <line x1="100" y1="50" x2="100" y2="600" stroke="#e2e8f0" stroke-width="1"/>
+                    <line x1="200" y1="50" x2="200" y2="600" stroke="#e2e8f0" stroke-width="1"/>
+                    <line x1="300" y1="50" x2="300" y2="600" stroke="#e2e8f0" stroke-width="1"/>
+                    <line x1="400" y1="50" x2="400" y2="600" stroke="#e2e8f0" stroke-width="1"/>
+                    <line x1="500" y1="50" x2="500" y2="600" stroke="#e2e8f0" stroke-width="1"/>
+                    <line x1="600" y1="50" x2="600" y2="600" stroke="#e2e8f0" stroke-width="1"/>
+                    <line x1="700" y1="50" x2="700" y2="600" stroke="#e2e8f0" stroke-width="1"/>
+                    
+                    <line x1="100" y1="100" x2="700" y2="100" stroke="#e2e8f0" stroke-width="1"/>
+                    <line x1="100" y1="200" x2="700" y2="200" stroke="#e2e8f0" stroke-width="1"/>
+                    <line x1="100" y1="300" x2="700" y2="300" stroke="#e2e8f0" stroke-width="1"/>
+                    <line x1="100" y1="400" x2="700" y2="400" stroke="#e2e8f0" stroke-width="1"/>
+                    <line x1="100" y1="500" x2="700" y2="500" stroke="#e2e8f0" stroke-width="1"/>
+                    <line x1="100" y1="600" x2="700" y2="600" stroke="#e2e8f0" stroke-width="1"/>
+
+                    <g id="northside" class="neighborhood" data-name="Northside" data-intensity="Very High" data-color="#dc2626">
+                        <rect x="300" y="150" width="180" height="140" fill="#dc2626" opacity="0.7" stroke="#64748b" stroke-width="1" rx="8"/>
+                        <text x="390" y="210" text-anchor="middle" font-weight="bold" fill="#1e293b" font-size="16">Northside</text>
+                        <text x="390" y="230" text-anchor="middle" fill="#334155" font-size="12">Very High</text>
+                    </g>
+
+                    <g id="westside" class="neighborhood" data-name="Westside" data-intensity="High" data-color="#ea580c">
+                        <rect x="120" y="200" width="160" height="150" fill="#ea580c" opacity="0.7" stroke="#64748b" stroke-width="1" rx="8"/>
+                        <text x="200" y="265" text-anchor="middle" font-weight="bold" fill="#1e293b" font-size="16">Westside</text>
+                        <text x="200" y="285" text-anchor="middle" fill="#334155" font-size="12">High</text>
+                    </g>
+
+                    <g id="eastside" class="neighborhood" data-name="Eastside" data-intensity="Moderate" data-color="#f59e0b">
+                        <rect x="500" y="200" width="140" height="130" fill="#f59e0b" opacity="0.7" stroke="#64748b" stroke-width="1" rx="8"/>
+                        <text x="570" y="255" text-anchor="middle" font-weight="bold" fill="#1e293b" font-size="16">Eastside</text>
+                        <text x="570" y="275" text-anchor="middle" fill="#334155" font-size="12">Moderate</text>
+                    </g>
+
+                    <g id="downtown" class="neighborhood" data-name="Downtown" data-intensity="Moderate" data-color="#fbbf24">
+                        <rect x="310" y="310" width="120" height="100" fill="#fbbf24" opacity="0.7" stroke="#64748b" stroke-width="1" rx="8"/>
+                        <text x="370" y="355" text-anchor="middle" font-weight="bold" fill="#1e293b" font-size="16">Downtown</text>
+                        <text x="370" y="375" text-anchor="middle" fill="#334155" font-size="12">Moderate</text>
+                    </g>
+
+                    <g id="southside" class="neighborhood" data-name="Southside" data-intensity="Low-Moderate" data-color="#fcd34d">
+                        <rect x="280" y="430" width="180" height="120" fill="#fcd34d" opacity="0.7" stroke="#64748b" stroke-width="1" rx="8"/>
+                        <text x="370" y="480" text-anchor="middle" font-weight="bold" fill="#1e293b" font-size="16">Southside</text>
+                        <text x="370" y="500" text-anchor="middle" fill="#334155" font-size="12">Low-Moderate</text>
+                    </g>
+
+                    <g id="university" class="neighborhood" data-name="University Area" data-intensity="Low" data-color="#fde68a">
+                        <rect x="480" y="360" width="170" height="130" fill="#fde68a" opacity="0.7" stroke="#64748b" stroke-width="1" rx="8"/>
+                        <text x="565" y="415" text-anchor="middle" font-weight="bold" fill="#1e293b" font-size="16">University</text>
+                        <text x="565" y="435" text-anchor="middle" font-weight="bold" fill="#1e293b" font-size="16">Area</text>
+                        <text x="565" y="455" text-anchor="middle" fill="#334155" font-size="12">Low</text>
+                    </g>
+
+                    <text x="400" y="30" text-anchor="middle" font-weight="bold" font-size="20" fill="#1e293b">Syracuse Neighborhoods</text>
+                </svg>
+
+                <div class="legend">
+                    <div class="legend-title">Concentration Level</div>
+                    <div class="legend-items">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #dc2626;"></div>
+                            <span class="legend-text">Very High</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #ea580c;"></div>
+                            <span class="legend-text">High</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #f59e0b;"></div>
+                            <span class="legend-text">Moderate</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #fcd34d;"></div>
+                            <span class="legend-text">Low-Moderate</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #fde68a;"></div>
+                            <span class="legend-text">Low</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="details-section">
+                <h2 id="details-title">Neighborhood Details</h2>
+                <div class="details-content" id="details-content">
+                    <div class="empty-state">
+                        <div class="empty-icon">ℹ️</div>
+                        <p>Hover over a neighborhood to see details</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sources-section">
+            <h2>Data Sources & Methodology</h2>
+            <div style="color: #334155; font-size: 14px; line-height: 1.6;">
+                <strong style="display: block; margin-bottom: 8px;">Primary Sources:</strong>
+                <ul>
+                    <li><strong>CNY Vitals (2025):</strong> Regional demographic analysis documenting Northside as primary immigrant settlement area</li>
+                    <li><strong>Data USA (2023):</strong> Census-based statistics showing 11.6% foreign-born population (17,000 people)</li>
+                    <li><strong>NEHDA Report (2015):</strong> Detailed analysis of Northside census tracts and refugee resettlement patterns</li>
+                    <li><strong>NY State Refugee Data (2024):</strong> Onondaga County identified as top-5 resettlement county</li>
+                    <li><strong>Syracuse City School District:</strong> Reports 70+ languages spoken, reflecting diversity</li>
+                </ul>
+                
+                <div class="info-box blue">
+                    <strong>What's Well-Documented:</strong>
+                    <p>Northside's status as the primary immigrant and refugee settlement area is consistently confirmed across multiple independent sources.</p>
+                </div>
+                
+                <div class="info-box amber">
+                    <strong>What's Estimated:</strong>
+                    <p>Concentration levels in other neighborhoods are based on general census patterns and historical data, not precise current statistics.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var neighborhoodData = {
+            northside: {
+                population: 'Highest concentration',
+                details: 'Primary refugee resettlement area. Majority of non-English speakers in Onondaga County. Large Vietnamese, Somali, Syrian, Burmese, Bhutanese, and Congolese populations.',
+                sources: 'CNY Vitals, NEHDA Report'
+            },
+            westside: {
+                population: 'Significant presence',
+                details: 'Historic immigrant neighborhood with diverse populations. Contains refugee populations and established immigrant communities.',
+                sources: 'Historical settlement patterns'
+            },
+            eastside: {
+                population: 'Moderate presence',
+                details: 'Historically housed immigrants, now transitioning. Some immigrant families remain.',
+                sources: 'CNY Vitals, Academic research'
+            },
+            downtown: {
+                population: 'Moderate presence',
+                details: 'Central area with mixed populations. Some immigrant-owned businesses.',
+                sources: 'General observation'
+            },
+            southside: {
+                population: 'Lower concentration',
+                details: 'Less concentrated immigrant population. More dispersed settlement.',
+                sources: 'Census patterns'
+            },
+            university: {
+                population: 'Low concentration',
+                details: 'Primarily students. Some international students but not permanent immigrants.',
+                sources: 'University data'
+            }
+        };
+
+        var neighborhoods = document.querySelectorAll('.neighborhood');
+        var detailsTitle = document.getElementById('details-title');
+        var detailsContent = document.getElementById('details-content');
+
+        neighborhoods.forEach(function(area) {
+            var rect = area.querySelector('rect');
+            
+            area.addEventListener('mouseenter', function() {
+                var id = this.id;
+                var name = this.dataset.name;
+                var intensity = this.dataset.intensity;
+                var color = this.dataset.color;
+                var data = neighborhoodData[id];
+
+                rect.setAttribute('opacity', '0.9');
+                rect.setAttribute('stroke', '#1e293b');
+                rect.setAttribute('stroke-width', '3');
+
+                detailsTitle.textContent = name;
+                detailsContent.innerHTML = '<div class="detail-row">' +
+                    '<div class="detail-label">Concentration Level</div>' +
+                    '<div class="detail-value" style="color: ' + color + ';">' + intensity + '</div>' +
+                    '</div>' +
+                    '<div class="detail-row">' +
+                    '<div class="detail-label">Population</div>' +
+                    '<div class="detail-text">' + data.population + '</div>' +
+                    '</div>' +
+                    '<div class="detail-row">' +
+                    '<div class="detail-label">Details</div>' +
+                    '<div class="detail-text">' + data.details + '</div>' +
+                    '</div>' +
+                    '<div class="detail-row">' +
+                    '<div class="detail-label">Data Sources</div>' +
+                    '<div class="detail-text" style="font-size: 12px; color: #64748b;">' + data.sources + '</div>' +
+                    '</div>';
+            });
+
+            area.addEventListener('mouseleave', function() {
+                rect.setAttribute('opacity', '0.7');
+                rect.setAttribute('stroke', '#64748b');
+                rect.setAttribute('stroke-width', '1');
+
+                detailsTitle.textContent = 'Neighborhood Details';
+                detailsContent.innerHTML = '<div class="empty-state">' +
+                    '<div class="empty-icon">ℹ️</div>' +
+                    '<p>Hover over a neighborhood to see details</p>' +
+                    '</div>';
+            });
+        });
+    </script>
+</body>
+</html>
