@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Popular Dishes Around the World</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #0d0c0a;
+            --accent: #c9a227;
+            --text: #e8e4dc;
+            --muted: #8a8578;
+        }
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        #globe-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+        header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 1.5rem 1.5rem 1rem;
+            text-align: center;
+            z-index: 10;
+            pointer-events: none;
+        }
+        h1 {
+            font-family: 'DM Serif Display', serif;
+            font-size: clamp(1.5rem, 4vw, 2.25rem);
+            font-weight: 400;
+            color: var(--accent);
+            letter-spacing: 0.02em;
+        }
+        .tagline {
+            margin-top: 0.25rem;
+            font-size: 0.9rem;
+            font-weight: 300;
+            color: var(--muted);
+        }
+        .hint {
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            color: var(--muted);
+            opacity: 0.8;
+        }
+        .tooltip {
+            position: absolute;
+            max-width: 280px;
+            padding: 1rem 1.25rem;
+            background: rgba(25, 23, 18, 0.95);
+            border: 1px solid rgba(201, 162, 39, 0.3);
+            border-radius: 10px;
+            pointer-events: none;
+            z-index: 100;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+        .tooltip.visible { opacity: 1; }
+        .tooltip .region {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--accent);
+            margin-bottom: 0.25rem;
+        }
+        .tooltip h3 {
+            font-family: 'DM Serif Display', serif;
+            font-size: 1.15rem;
+            font-weight: 400;
+            color: var(--text);
+            margin-bottom: 0.4rem;
+        }
+        .tooltip p {
+            color: var(--muted);
+            font-weight: 300;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Popular Dishes of the World</h1>
+        <p class="tagline">Iconic flavors from every corner of the globe</p>
+        <p class="hint">Drag to rotate · Scroll to zoom · Hover markers for details</p>
+    </header>
+    <div id="globe-container"></div>
+    <div id="tooltip" class="tooltip"></div>
+
+    <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/globe.gl@2.31.0/dist/globe.gl.min.js"></script>
+    <script>
+        const dishes = [
+            { region: 'Italy', name: 'Pizza', desc: 'Thin crust, tomato, mozzarella, and endless toppings. A global comfort food.', lat: 41.9, lng: 12.5 },
+            { region: 'Japan', name: 'Sushi', desc: 'Vinegared rice with fish, vegetables, or egg. Elegant and endlessly varied.', lat: 35.7, lng: 139.7 },
+            { region: 'Mexico', name: 'Tacos', desc: 'Soft or crispy tortillas filled with meat, salsa, and fresh garnishes.', lat: 19.4, lng: -99.1 },
+            { region: 'USA', name: 'Hamburger', desc: 'Grilled beef patty in a bun with lettuce, tomato, and classic fixings.', lat: 39.8, lng: -98.6 },
+            { region: 'Vietnam', name: 'Phở', desc: 'Brothy rice noodle soup with herbs, beef or chicken, and aromatics.', lat: 21.0, lng: 105.8 },
+            { region: 'India', name: 'Biryani', desc: 'Fragrant spiced rice layered with meat or vegetables and herbs.', lat: 28.6, lng: 77.2 },
+            { region: 'China', name: 'Peking Duck', desc: 'Crispy-skinned duck served with thin pancakes and hoisin sauce.', lat: 39.9, lng: 116.4 },
+            { region: 'Thailand', name: 'Pad Thai', desc: 'Stir-fried rice noodles with shrimp, tofu, peanuts, and tamarind.', lat: 13.8, lng: 100.5 },
+            { region: 'UK', name: 'Fish & Chips', desc: 'Beer-battered cod with thick-cut fries and mushy peas.', lat: 51.5, lng: -0.1 },
+            { region: 'France', name: 'Croissant', desc: 'Buttery, flaky pastry. A breakfast and café staple worldwide.', lat: 48.9, lng: 2.4 },
+            { region: 'Peru', name: 'Ceviche', desc: 'Raw fish cured in citrus with onion, chili, and cilantro.', lat: -12.0, lng: -77.0 },
+            { region: 'South Korea', name: 'Kimchi', desc: 'Fermented vegetables, usually napa cabbage, spicy and tangy.', lat: 37.6, lng: 127.0 },
+            { region: 'Spain', name: 'Paella', desc: 'Saffron rice with seafood, chicken, or rabbit and vegetables.', lat: 40.4, lng: -3.7 },
+            { region: 'Turkey', name: 'Kebab', desc: 'Grilled meat—often lamb or chicken—with bread and salads.', lat: 39.9, lng: 32.9 },
+            { region: 'Brazil', name: 'Feijoada', desc: 'Black bean stew with pork, served with rice and orange.', lat: -15.8, lng: -47.9 }
+        ];
+
+        const container = document.getElementById('globe-container');
+        const tooltipEl = document.getElementById('tooltip');
+
+        const globe = Globe()
+            .globeImageUrl('//unpkg.com/three-globe/example/img/earth-dark-marble.jpg')
+            .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
+            .backgroundImageUrl('//unpkg.com/three-globe/example/img/night-sky.png')
+            (container);
+
+        // Dark, minimal globe style (no image = solid color; we'll use a simple look)
+        globe.globeImageUrl(null);
+        globe.bumpImageUrl(null);
+        globe.backgroundImageUrl(null);
+
+        globe
+            .globeMaterial(new THREE.MeshPhongMaterial({
+                color: '#1a1814',
+                emissive: '#0d0c0a',
+                specular: '#c9a227',
+                shininess: 8
+            }))
+            .showAtmosphere(true)
+            .atmosphereColor('#2a2520')
+            .atmosphereAltitude(0.2)
+            .pointOfView({ lat: 20, lng: 10, altitude: 2.2 }, 0)
+            .pointsData(dishes)
+            .pointLat(d => d.lat)
+            .pointLng(d => d.lng)
+            .pointColor(() => '#c9a227')
+            .pointAltitude(0.01)
+            .pointRadius(0.35)
+            .pointLabel(d => {
+                return `<div style="
+                    font-family: 'Outfit', sans-serif;
+                    padding: 0.5rem 0.75rem;
+                    background: rgba(25,23,18,0.95);
+                    border: 1px solid rgba(201,162,39,0.4);
+                    border-radius: 8px;
+                    color: #e8e4dc;
+                    font-size: 0.85rem;
+                    max-width: 220px;
+                ">
+                    <div style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; color: #c9a227; margin-bottom: 0.2rem;">${d.region}</div>
+                    <strong style="font-size: 1rem;">${d.name}</strong>
+                    <div style="color: #8a8578; margin-top: 0.35rem; font-weight: 300;">${d.desc}</div>
+                </div>`;
+            })
+            .onPointHover(highlight => {
+                if (highlight) {
+                    const d = highlight;
+                    tooltipEl.innerHTML = `
+                        <span class="region">${d.region}</span>
+                        <h3>${d.name}</h3>
+                        <p>${d.desc}</p>
+                    `;
+                    tooltipEl.classList.add('visible');
+                    tooltipEl.style.left = highlight.x + 'px';
+                    tooltipEl.style.top = highlight.y + 'px';
+                } else {
+                    tooltipEl.classList.remove('visible');
+                }
+            });
+
+        // Update tooltip position when mouse moves over a point (globe may not give us x,y in onPointHover - check)
+        // globe.gl pointLabel shows native tooltip; we're also using custom tooltip. Let's use mousemove to position.
+        document.addEventListener('mousemove', e => {
+            if (tooltipEl.classList.contains('visible')) {
+                const offset = 15;
+                tooltipEl.style.left = Math.min(e.clientX + offset, window.innerWidth - 300) + 'px';
+                tooltipEl.style.top = Math.min(e.clientY + offset, window.innerHeight - 150) + 'px';
+            }
+        });
+
+        // Optional: subtle auto-rotation
+        const animate = () => {
+            globe.pointOfView({ lat: 20, lng: globe.pointOfView().lng + 0.08, altitude: 2.2 });
+            requestAnimationFrame(animate);
+        };
+        let autoRotate = true;
+        container.addEventListener('mousedown', () => { autoRotate = false; });
+        container.addEventListener('mouseup', () => { autoRotate = true; });
+        container.addEventListener('mouseleave', () => { autoRotate = true; });
+        function spin() {
+            if (autoRotate) globe.pointOfView({ lat: 20, lng: globe.pointOfView().lng + 0.06, altitude: 2.2 });
+            requestAnimationFrame(spin);
+        }
+        spin();
+    </script>
+</body>
+</html>
